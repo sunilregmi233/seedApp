@@ -1,0 +1,9 @@
+Django
+numpy
+opencv-python
+pandas
+psycopg[binary]
+imutils
+scipy
+gunicorn 
+uvicorn
