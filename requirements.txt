@@ -7,3 +7,4 @@ imutils
 scipy
 gunicorn 
 uvicorn
+pillow
