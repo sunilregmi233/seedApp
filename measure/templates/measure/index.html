@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Seed Measurement - Upload and Reference Selection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+        }
+        canvas {
+            border: 1px solid black;
+            margin-top: 10px;
+            cursor: crosshair;
+            max-width: 100%;
+            height: auto;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #instructions {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h2>Upload Image and Select 1 cm Reference Box</h2>
+
+    <form id="uploadForm" method="post" enctype="multipart/form-data" action="{% url 'process_image' %}">
+        {% csrf_token %}
+        <input type="file" id="imageInput" name="image" accept="image/*" required><br>
+
+        <canvas id="canvas" style="display:none;"></canvas>
+
+        <!-- Hidden inputs for reference points -->
+        <input type="hidden" name="x1" id="x1">
+        <input type="hidden" name="y1" id="y1">
+        <input type="hidden" name="x2" id="x2">
+        <input type="hidden" name="y2" id="y2">
+
+        <br>
+        <button type="submit" id="submitBtn" disabled>Process Image</button>
+    </form>
+<br><br>
+{% if measurements_exist %}
+<a href="{% url 'show_results' seed_image.id %}">
+    <button id="exportBtn" {% if not measurements_exist %}disabled{% endif %}>View/Export Measurements</button>
+</a>
+{% endif %}
+  
+</a>
+
+<p id="instructions">Please upload an image to begin.</p>
+
+<script>
+  const imageInput = document.getElementById('imageInput');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const submitBtn = document.getElementById('submitBtn');
+  const instructions = document.getElementById('instructions');
+  const exportBtn = document.getElementById('exportBtn');
+
+  let clicks = [];
+  let img = new Image();
+
+  imageInput.addEventListener('change', function() {
+      const file = this.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+          img = new Image();
+          img.onload = function() {
+              canvas.width = img.width;
+              canvas.height = img.height;
+              ctx.drawImage(img, 0, 0);
+              canvas.style.display = 'block';
+
+              clicks = [];
+              submitBtn.disabled = true;
+              instructions.textContent = 'Click top-left and bottom-right corners of the 1 cm reference box.';
+          }
+          img.src = e.target.result;
+      }
+      reader.readAsDataURL(file);
+  });
+
+ canvas.addEventListener('click', function(e) {
+    if (clicks.length >= 2) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    const x = Math.round((e.clientX - rect.left) * scaleX);
+    const y = Math.round((e.clientY - rect.top) * scaleY);
+    clicks.push({x, y});
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+
+    ctx.fillStyle = 'red';
+    clicks.forEach(pt => {
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 5, 0, 2 * Math.PI);
+        ctx.fill();
+    });
+
+    if (clicks.length === 2) {
+        document.getElementById('x1').value = clicks[0].x;
+        document.getElementById('y1').value = clicks[0].y;
+        document.getElementById('x2').value = clicks[1].x;
+        document.getElementById('y2').value = clicks[1].y;
+
+        instructions.textContent = 'Reference points selected. You can now process the image.';
+        submitBtn.disabled = false;
+    } else {
+        instructions.textContent = 'Click one more point to complete the reference box.';
+        submitBtn.disabled = true;
+    }
+});
+</script>

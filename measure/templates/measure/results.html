@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Seed Measurement Results</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; }
+        table { border-collapse: collapse; width: 60%; margin-bottom: 20px; }
+        table, th, td { border: 1px solid #333; }
+        th, td { padding: 8px; text-align: center; }
+        button, a { margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <h2>Seed Measurement Results (max 10 samples)</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Seed #</th>
+                <th>Width (mm)</th>
+                <th>Height (mm)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in measurements %}
+            <tr>
+                <td>{{ m.seed_number }}</td>
+                <td>{{ m.width_mm }}</td>
+                <td>{{ m.height_mm }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{% url 'export_csv' seed_image.id %}">
+        <button>Export CSV</button>
+    </a>
+    <a href="{% url 'index' %}">
+        <button>Measure Another Image</button>
+    </a>
+</body>
+</html>
